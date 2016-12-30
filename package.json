@@ -1,0 +1,31 @@
+{
+  "name": "discogs-importer",
+  "version": "1.0.0",
+  "description": "File importer to Discogs",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ribeaud/discogs-importer.git"
+  },
+  "keywords": [
+    "Discogs"
+  ],
+  "author": "Christian Ribeaud <chri@ribeaud.ch> (http://www.ribeaud.ch)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ribeaud/discogs-importer/issues"
+  },
+  "homepage": "https://github.com/ribeaud/discogs-importer#readme",
+  "dependencies": {
+    "csv-parse": "1.1.7",
+    "disconnect": "1.0.2",
+    "lodash": "4.17.3"
+  },
+  "devDependencies": {
+    "chai": "3.5.0",
+    "mocha": "3.2.0"
+  }
+}
