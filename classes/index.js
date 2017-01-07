@@ -3,8 +3,7 @@
 const Enum = require('enum');
 
 // 'DEV' is the mode where application is started in IDE.
-// 'JENKINS' is the mode where application is started on Jenkins. This applies to 'npm test' as well.
-exports.Environment = new Enum({PROD: 'production', DEV: 'development', JENKINS: 'jenkins'});
+exports.Environment = new Enum({PROD: 'production', DEV: 'development'});
 exports.Environment.fromDescription = function (description) {
     for (let e of this.enums) {
         if (e.value === description) {
@@ -14,3 +13,5 @@ exports.Environment.fromDescription = function (description) {
     throw new Error(`No Environment for description '${description}'.`);
 };
 Object.freeze(exports.Environment);
+
+exports.Release = require('./Release');
