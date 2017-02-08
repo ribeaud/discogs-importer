@@ -33,27 +33,30 @@ const parser = parse({delimiter: ';', relax: true, columns: true, trim: true}, (
                 switch (len) {
                     case 0:
                         logger.info(`NOTHING has been found for '${release}'.`);
-                        return Promise.reject();
+                        next();
+                        break;
                     case 1:
-                        return _addToCollectionPromise(data.results[0]);
+                        return _asPromise(addToCollection, data.results[0]).then(next);
                     default:
                         const releases = _.filter(data.results, {type: 'release'});
                         if (releases.length == 1) {
-                            return _addToCollectionPromise(releases[0]);
+                            return _asPromise(addToCollection, releases[0]).then(next);
                         } else {
                             logger.info(`TOO MANY items (${len}) found for '${release}'.`);
-                            return Promise.reject();
+                            next();
                         }
                 }
-            }).then(_.noop).catch(err => {
+            }).catch(err => {
                 if (err) {
                     logger.error(err);
                 }
             });
             // We have to throttle our requests. Otherwise, Discogs will reject us.
-            if (counter < data.length) {
-                setTimeout(iterate, 1000);
-            }
+            const next = () => {
+                if (counter < data.length) {
+                    setTimeout(iterate, 500);
+                }
+            };
         };
         iterate();
     }
@@ -63,6 +66,7 @@ const parser = parse({delimiter: ';', relax: true, columns: true, trim: true}, (
  * Adds given release to <b>Discogs</b> collection.
  *
  * @param release the release data.
+ * @param callback the callback. Accepts at most one parameter, the <i>err</i> if any.
  */
 const addToCollection = (release, callback) => {
     const {userName, folderName} = config;
@@ -95,16 +99,30 @@ const addToCollection = (release, callback) => {
         .catch(err => callback(err));
 };
 
-const _addToCollectionPromise = (release) => {
+/**
+ * Converts given <i>func</i> into a <code>Promise</code>.
+ * <p>
+ * Note that it is expected that passed function has a callback as its last argument.
+ * </p>
+ *
+ * @param func the function to convert. Can NOT be <code>null</code>.
+ * @param args function arguments.
+ * @returns {*}
+ * @private
+ */
+const _asPromise = (func, ...args) => {
+    // Make sure 'args' is defined
+    args = args || [];
     return new Promise((resolve, reject) => {
-        addToCollection(release, (err) => {
+        // Append a callback to function arguments
+        args.push((err) => {
             if (err) {
                 return reject(err);
             }
             resolve();
         });
-
+        func.apply(this, args);
     });
-};
+}
 
 fs.createReadStream(__dirname + '/test/resources/all.csv').pipe(parser);
