@@ -25,8 +25,9 @@
     "disconnect": "1.0.2",
     "enum": "2.3.0",
     "lodash": "4.17.3",
-    "promise": "^7.1.1",
+    "promise": "7.1.1",
     "request": "2.79.0",
+    "string-similarity": "1.1.0",
     "winston": "2.3.0"
   },
   "devDependencies": {

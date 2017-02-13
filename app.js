@@ -11,6 +11,7 @@ const http = require("http");
 const Release = require('./classes').Release;
 const Promise = require('promise');
 const assert = require('assert');
+const similarity = require('string-similarity');
 
 const discogs = new Discogs({userToken: config.userToken});
 const database = discogs.database();
@@ -32,8 +33,7 @@ const parser = parse({delimiter: ';', relax: true, columns: true, trim: true}, (
                 let len = data.results.length;
                 switch (len) {
                     case 0:
-                        logger.info(`NOTHING has been found for '${release}'.`);
-                        next();
+                        _asPromise(_similaritySearch, release).then(next);
                         break;
                     case 1:
                         return _asPromise(addToCollection, data.results[0]).then(next);
@@ -61,6 +61,35 @@ const parser = parse({delimiter: ';', relax: true, columns: true, trim: true}, (
         iterate();
     }
 });
+
+/**
+ * Performs a similarity search for given <i>release</i>.
+ *
+ * @param release the release to search for. Can NOT be <code>null</code>.
+ * @param callback the callback. Accepts at most one parameter, the <i>err</i> if any.
+ * @private
+ */
+const _similaritySearch = (release, callback) => {
+    const search = `${release.artist} - ${release.title}`;
+    database.search(search, {format: release.format}).then(data => {
+        const len = data.results.length;
+        if (!len) {
+            logger.info(`NOTHING has been found for '${release}'.`);
+            return callback();
+        }
+        const titles = _.map(data.results, res => res.title);
+        const bestMatch = similarity.findBestMatch(search, titles).bestMatch;
+        if (bestMatch.rating > 0.7) {
+            let res = _.find(data.results, res => res.title == bestMatch.target);
+            logger.info(`Following SIMILAR match '${res.title}' found for '${release}'.`);
+            return _asPromise(addToCollection, res).then(callback);
+        }
+        logger.info(`NO SIMILAR match found for '${release}'.`);
+        callback();
+    })
+    // Catch any error happening in the chain
+        .catch(err => callback(err));
+};
 
 /**
  * Adds given release to <b>Discogs</b> collection.
@@ -123,6 +152,6 @@ const _asPromise = (func, ...args) => {
         });
         func.apply(this, args);
     });
-}
+};
 
 fs.createReadStream(__dirname + '/test/resources/all.csv').pipe(parser);
