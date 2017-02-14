@@ -54,7 +54,7 @@ const parser = parse({delimiter: ';', relax: true, columns: true, trim: true}, (
             // We have to throttle our requests. Otherwise, Discogs will reject us.
             const next = () => {
                 if (counter < data.length) {
-                    setTimeout(iterate, 500);
+                    setTimeout(iterate, 100);
                 }
             };
         };
