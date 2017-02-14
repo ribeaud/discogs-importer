@@ -84,7 +84,7 @@ const _similaritySearch = (release, callback) => {
         // If we have multiple times the SAME title, then we should exit
         if (uniqueTitles.size < titles.length) {
             logger.info(`TOO MANY identical titles (${len}) found for '${release}'.`);
-            callback();
+            return callback();
         }
         const similaritySearch = similarity.findBestMatch(search, titles);
         logger.debug(`Following ratings found '${util.inspect(similaritySearch.ratings)}'.`);
