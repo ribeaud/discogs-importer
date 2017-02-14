@@ -131,7 +131,7 @@ const addToCollection = (release, callback) => {
             callback();
         } else {
             assert(folder, 'Unspecified folder');
-            logger.info(`Release '${release.title}' has been ADDED to collection '${folderName}'.`);
+            logger.info(`ADDING release '${release.title}' to collection '${folderName}'.`);
             collection.addRelease(userName, folder.id, release.id, callback);
         }
     })
