@@ -12,6 +12,7 @@ const Release = require('./classes').Release;
 const Promise = require('promise');
 const assert = require('assert');
 const similarity = require('string-similarity');
+const util = require('util');
 
 const discogs = new Discogs({userToken: config.userToken});
 const database = discogs.database();
@@ -77,12 +78,22 @@ const _similaritySearch = (release, callback) => {
             logger.info(`NOTHING has been found for '${release}'.`);
             return callback();
         }
-        const titles = _.map(data.results, res => res.title);
-        const bestMatch = similarity.findBestMatch(search, titles).bestMatch;
+        // Only consider results of type 'release'
+        const titles = _.filter(data.results, {type: 'release'}).map(res => res.title);
+        const uniqueTitles = new Set(titles);
+        // If we have multiple times the SAME title, then we should exit
+        if (uniqueTitles.size < titles.length) {
+            logger.info(`TOO MANY identical titles (${len}) found for '${release}'.`);
+            callback();
+        }
+        const similaritySearch = similarity.findBestMatch(search, titles);
+        logger.debug(`Following ratings found '${util.inspect(similaritySearch.ratings)}'.`);
+        const bestMatch = similaritySearch.bestMatch;
+        // Be more verbose here
         if (bestMatch.rating > 0.7) {
-            let res = _.find(data.results, res => res.title == bestMatch.target);
-            logger.info(`Following SIMILAR match '${res.title}' found for '${release}'.`);
-            return _asPromise(addToCollection, res).then(callback);
+            const answer = _.find(data.results, result => result.title == bestMatch.target);
+            logger.info(`Following SIMILAR match '${answer.title}' found for '${release}'.`);
+            return _asPromise(addToCollection, answer).then(callback);
         }
         logger.info(`NO SIMILAR match found for '${release}'.`);
         callback();

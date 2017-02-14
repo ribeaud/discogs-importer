@@ -43,4 +43,15 @@ describe('/GET database/search', () => {
             done();
         });
     });
+    // World Premiere - Share The Night
+    const s3 = 'World Premiere - Share The Night';
+    it(s3, (done) => {
+        database.search(null, {artist: 'World Premiere', title: 'Share The Night'}, (err, data) => {
+            if (err) {
+                return done(err);
+            }
+            data.results.should.be.lengthOf(22);
+            done();
+        });
+    });
 });
