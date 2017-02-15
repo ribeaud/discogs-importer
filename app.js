@@ -28,23 +28,25 @@ const parser = parse({delimiter: ';', relax: true, columns: true, trim: true}, (
         let counter = 0;
         const iterate = () => {
             const item = data[counter++];
-            const release = new Release(item.Artist, item.Title, item.Format);
+            const release = new Release(item.Artist, item.Title, item.Format, item['Label No']);
             logger.debug(`Looking for '${release}'.`);
-            database.search(null, release).then(data => {
+            database.search(null, _.pick(release, ['artist', 'title'])).then(data => {
                 let len = data.results.length;
                 switch (len) {
                     case 0:
-                        _asPromise(_similaritySearch, release).then(next);
-                        break;
+                        // Nothing found. Try a similarity search
+                        return _asPromise(_similaritySearch, release).then(next);
                     case 1:
+                        // Easiest case: only one match
                         return _asPromise(addToCollection, data.results[0]).then(next);
                     default:
+                        // Multiple matches
                         const releases = _.filter(data.results, {type: 'release'});
                         if (releases.length == 1) {
                             return _asPromise(addToCollection, releases[0]).then(next);
                         } else {
                             logger.info(`TOO MANY items (${len}) found for '${release}'.`);
-                            next();
+                            return next();
                         }
                 }
             }).catch(err => {
@@ -128,11 +130,16 @@ const addToCollection = (release, callback) => {
     }).then(instances => {
         if (instances.releases.length) {
             logger.info(`Release '${release.title}' ALREADY exists in collection '${folderName}'.`);
-            callback();
+            return callback();
         } else {
             assert(folder, 'Unspecified folder');
-            logger.info(`ADDING release '${release.title}' to collection '${folderName}'.`);
-            collection.addRelease(userName, folder.id, release.id, callback);
+            // Only add the release if we are NOT in dry mode.
+            if (!config.dryRun) {
+                logger.info(`ADDING release '${release.title}' to collection '${folderName}'.`);
+                return collection.addRelease(userName, folder.id, release.id, callback);
+            }
+            logger.info(`WOULD ADD release '${release.title}' to collection '${folderName}'.`);
+            return callback();
         }
     })
     // Catch any error happening in the chain
