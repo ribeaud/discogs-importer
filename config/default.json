@@ -1,7 +1,7 @@
 {
   "userName": "ribose",
   "folderName": "Deejay",
-  "userToken": "<user-token-to-be-generated-at-Discogs>",
+  "userToken": "fwxgZMIuKZwNNoXViqyfdizawVEPkqVfgDTtSfVI",
   "dryRun": false,
   "csv": {
     "delimiter": ";"

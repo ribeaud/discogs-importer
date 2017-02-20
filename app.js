@@ -37,7 +37,7 @@ const parser = parse({
             const release = new Release(item.Artist, item.Title, item.Format, item.Catno);
             logger.debug(`Looking for '${release}'.`);
             // Only consider results of type 'release'
-            database.search(null, {artist: release.artist, title: release.title, type: 'release'}).then(data => {
+            database.search(null, {artist: release.artist, title: release.title, format: release.format, type: 'release'}).then(data => {
                 const results = data.results;
                 let len = results.length;
                 switch (len) {
@@ -49,7 +49,8 @@ const parser = parse({
                         return _asPromise(addToCollection, results[0]).then(next);
                     default:
                         // Multiple matches
-                        logger.info(`TOO MANY items (${len}) found for '${release}'.`);
+                        const catnos = _.map(results, 'catno');
+                        logger.info(`TOO MANY items (${len}) found for '${release}' (Catnos: '${catnos.join("', '")}').`);
                         return next();
                 }
             }).catch(err => {
@@ -122,7 +123,7 @@ const addToCollection = (release, callback) => {
         if (folder) {
             return Promise.resolve(folder);
         } else {
-            const folderNames = _.map(folders.folders, {name});
+            const folderNames = _.map(folders.folders, 'name');
             const uncategorized = 'Uncategorized';
             logger.warn(`No folder named '${folderName}' found in folders '${folderNames}'. Using '${uncategorized}'.`);
             return Promise.resolve(_.find(folders.folders, {name: uncategorized}));
