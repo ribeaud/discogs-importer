@@ -37,8 +37,16 @@ const parser = parse({
             const release = new Release(item.Artist, item.Title, item.Format, item.Catno);
             logger.debug(`Looking for '${release}'.`);
             // Only consider results of type 'release'
-            database.search(null, {artist: release.artist, title: release.title, format: release.format, type: 'release'}).then(data => {
-                const results = data.results;
+            database.search(null, {
+                artist: release.artist,
+                title: release.title,
+                format: release.format,
+                type: 'release'
+            }).then(data => {
+                const results = _.filter(data.results, res => {
+                    // Filter out format 'Promo' and 'White Label' assuming we want to register a regular release
+                    return _.indexOf(res.format, 'Promo') < 0 && _.indexOf(res.format, 'White Label') < 0;
+                });
                 let len = results.length;
                 switch (len) {
                     case 0:
