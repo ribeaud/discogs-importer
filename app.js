@@ -36,24 +36,21 @@ const parser = parse({
             const item = data[counter++];
             const release = new Release(item.Artist, item.Title, item.Format, item.Catno);
             logger.debug(`Looking for '${release}'.`);
-            database.search(null, _.pick(release, ['artist', 'title'])).then(data => {
-                let len = data.results.length;
+            // Only consider results of type 'release'
+            database.search(null, {artist: release.artist, title: release.title, type: 'release'}).then(data => {
+                const results = data.results;
+                let len = results.length;
                 switch (len) {
                     case 0:
                         // Nothing found. Try a similarity search
                         return _asPromise(_similaritySearch, release).then(next);
                     case 1:
                         // Easiest case: only one match
-                        return _asPromise(addToCollection, data.results[0]).then(next);
+                        return _asPromise(addToCollection, results[0]).then(next);
                     default:
                         // Multiple matches
-                        const releases = _.filter(data.results, {type: 'release'});
-                        if (releases.length == 1) {
-                            return _asPromise(addToCollection, releases[0]).then(next);
-                        } else {
-                            logger.info(`TOO MANY items (${len}) found for '${release}'.`);
-                            return next();
-                        }
+                        logger.info(`TOO MANY items (${len}) found for '${release}'.`);
+                        return next();
                 }
             }).catch(err => {
                 if (err) {
@@ -80,14 +77,15 @@ const parser = parse({
  */
 const _similaritySearch = (release, callback) => {
     const search = `${release.artist} - ${release.title}`;
-    database.search(search, {format: release.format}).then(data => {
-        const len = data.results.length;
+    // Only consider results of type 'release'
+    database.search(search, {format: release.format, type: 'release'}).then(data => {
+        const results = data.results;
+        const len = results.length;
         if (!len) {
             logger.info(`NOTHING has been found for '${release}'.`);
             return callback();
         }
-        // Only consider results of type 'release'
-        const titles = _.filter(data.results, {type: 'release'}).map(res => res.title);
+        const titles = results.map(res => res.title);
         const similaritySearch = similarity.findBestMatch(search, titles);
         logger.debug(`Following ratings found '${util.inspect(similaritySearch.ratings)}'.`);
         const bestMatch = similaritySearch.bestMatch;
@@ -99,7 +97,7 @@ const _similaritySearch = (release, callback) => {
         }
         // Be more verbose here
         if (bestMatch.rating > 0.7) {
-            const answer = _.find(data.results, result => result.title == bestMatch.target);
+            const answer = _.find(results, result => result.title == bestMatch.target);
             logger.info(`Following SIMILAR match '${answer.title}' found for '${release}'.`);
             return _asPromise(addToCollection, answer).then(callback);
         }
@@ -141,10 +139,10 @@ const addToCollection = (release, callback) => {
             assert(folder, 'Unspecified folder');
             // Only add the release if we are NOT in dry mode.
             if (!config.dryRun) {
-                logger.info(`ADDING release '${release.title}' to collection '${folderName}'.`);
+                logger.info(`ADDING release '${release.title}' (ID: ${release.id}, Catno: ${release.catno}) to collection '${folderName}'.`);
                 return collection.addRelease(userName, folder.id, release.id, callback);
             }
-            logger.info(`WOULD ADD release '${release.title}' to collection '${folderName}'.`);
+            logger.info(`WOULD ADD release '${release.title}' (ID: ${release.id}, Catno: ${release.catno}) to collection '${folderName}'.`);
             return callback();
         }
     })
