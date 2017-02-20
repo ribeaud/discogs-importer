@@ -13,16 +13,17 @@ class Release {
      * @param artist the release artist. Can NOT be <code>null</code>.
      * @param title the release title. Can NOT be <code>null</code>.
      * @param format the release format. Can NOT be <code>null</code>.
-     * @param labelNo the label number. Can NOT be <code>null</code>.
+     * @param catno the label number (or search catalog number up to
+     * <a href="https://www.discogs.com/developers/#page:database,header:database-search">Discogs</a>). Could be <code>null</code>.
      */
-    constructor(artist, title, format, labelNo) {
+    constructor(artist, title, format, catno) {
         assert(artist, 'Unspecified artist');
         assert(title, 'Unspecified title');
         assert(format, 'Unspecified format');
         this.artist = artist;
         this.title = title;
         this.format = format;
-        this.labelNo = labelNo;
+        this.catno = catno;
     }
 
     /**

@@ -34,7 +34,7 @@ const parser = parse({
         let counter = 0;
         const iterate = () => {
             const item = data[counter++];
-            const release = new Release(item.Artist, item.Title, item.Format, item['Label No']);
+            const release = new Release(item.Artist, item.Title, item.Format, item.Catno);
             logger.debug(`Looking for '${release}'.`);
             database.search(null, _.pick(release, ['artist', 'title'])).then(data => {
                 let len = data.results.length;
