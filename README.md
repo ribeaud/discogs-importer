@@ -18,4 +18,10 @@ Expectations regarding the program itself:
 (`requests are throttled by the server to 240 per minute per IP address`),
 each **CSV** entry is handled _synchronously_.
 
-Current configuration could be found [here](config/default.json).
+Current configuration could be found [here](config/default.json) and MUST be adapted to your needs.
+
+### Running the program
+
+1. Install [Node.js](https://nodejs.org/)
+1. Go to this package's download directory
+1. Start the program with `node app.js <csv-file>`
