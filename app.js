@@ -13,6 +13,8 @@ const Promise = require('promise');
 const assert = require('assert');
 const similarity = require('string-similarity');
 const util = require('util');
+const program = require('commander');
+require('pkginfo')(module, 'version');
 
 const discogs = new Discogs({userToken: config.userToken});
 const database = discogs.database();
@@ -185,4 +187,26 @@ const _asPromise = (func, ...args) => {
     });
 };
 
-fs.createReadStream(__dirname + '/test/resources/all.csv').pipe(parser);
+program
+    .version(module.exports.version)
+    .parse(process.argv);
+
+const args = process.argv.slice(2);
+if (!args.length) {
+    program.outputHelp();
+} else {
+    let path = args[0];
+    path = path.startsWith('/') ? path : __dirname + `/${path}`;
+    fs.stat(args[0], (err, stats) => {
+        if (err) {
+            return console.error(`Given '${path}' does NOT exist.`);
+        }
+        if (stats.isFile()) {
+            logger.info(`Loading following file '${path}'.`);
+            fs.createReadStream(path).pipe(parser);
+        } else {
+            console.error(`Given path is NOT a file '${path}'.`);
+        }
+    });
+}
+

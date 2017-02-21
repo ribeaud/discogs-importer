@@ -1,10 +1,10 @@
 {
   "name": "discogs-importer",
-  "version": "1.0.0",
+  "version": "0.7.0",
   "description": "File importer to Discogs",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/.bin/mocha"
   },
   "repository": {
     "type": "git",
@@ -20,11 +20,13 @@
   },
   "homepage": "https://github.com/ribeaud/discogs-importer#readme",
   "dependencies": {
+    "commander": "2.9.0",
     "config": "1.24.0",
     "csv-parse": "1.1.7",
     "disconnect": "1.0.2",
     "enum": "2.3.0",
     "lodash": "4.17.3",
+    "pkginfo": "0.4.0",
     "promise": "7.1.1",
     "request": "2.79.0",
     "string-similarity": "1.1.0",
