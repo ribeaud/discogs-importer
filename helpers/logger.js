@@ -1,22 +1,33 @@
 'use strict';
 
-const winston = require('winston');
+const {createLogger, format, transports} = require('winston');
+const {combine, timestamp, label, printf} = format;
+
 const classes = require('../classes');
 const env = classes.Environment.fromDescription(process.env.NODE_ENV || 'development');
 
-const logger = winston.createLogger();
+const logger = createLogger();
+
+const myFormat = printf(({level, message, timestamp}) => {
+    return `${timestamp} [${level}]: ${message}`;
+});
 
 if (env.is(classes.Environment.DEV)) {
-    logger.add(new (winston.transports.Console)({
-        level: 'debug', timestamp: () => {
-            return new Date().toISOString();
-        }
+    logger.add(new (transports.Console)({
+        format: combine(
+            timestamp(),
+            myFormat
+        ),
+        level: 'debug'
     }));
 } else if (env.is(classes.Environment.PROD)) {
     logger.add(new (winston.transports.File)({
+        format: combine(
+            timestamp(),
+            myFormat
+        ),
         level: 'info',
         filename: 'chem-rich-books.log',
-        json: false
     }));
 }
 // Configure CLI on an instance of winston.Logger. Switching CLI on will make verbose logs disappearing... And I think
@@ -30,8 +41,3 @@ if (!env.is(classes.Environment.JENKINS)) {
 }
 
 module.exports = logger;
-module.exports.stream = {
-    write: (message, encoding) => {
-        logger.debug(message.trim());
-    }
-};

@@ -36,7 +36,7 @@ const parser = parse({
         let counter = 0;
         const iterate = () => {
             const item = data[counter++];
-            const release = new Release(item.Artist, item.Title, item.Format, item.Catno);
+            const release = new Release(item.Artist, item.Title, item.Format, item['Label No']);
             logger.debug(`Looking for '${release}'.`);
             // Only consider results of type 'release'
             database.search(null, {
