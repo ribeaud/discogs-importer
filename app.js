@@ -20,6 +20,12 @@ const discogs = new Discogs({userToken: config.userToken});
 const database = discogs.database();
 const collection = discogs.user().collection();
 
+function sleepFor(sleepDuration) {
+    var now = new Date().getTime();
+    while (new Date().getTime() < now + sleepDuration) { /* do nothing */
+    }
+}
+
 // We are using relax to preserve '"' within value. With 'columns', we make sure that object instead of arrays are returned.
 // With autodetection, it expects a header in CSV file.
 const parser = parse({
@@ -35,6 +41,7 @@ const parser = parse({
         // Data contain all the lines parsed
         let counter = 0;
         const iterate = () => {
+            sleepFor(5000);
             const item = data[counter++];
             const release = new Release(item.Artist, item.Title, item.Format, item['Label No']);
             logger.debug(`Looking for '${release}'.`);
@@ -115,7 +122,7 @@ const _similaritySearch = (release, callback) => {
         logger.info(`NO SIMILAR match found for '${release}'.`);
         callback();
     })
-    // Catch any error happening in the chain
+        // Catch any error happening in the chain
         .catch(err => callback(err));
 };
 
@@ -157,7 +164,7 @@ const addToCollection = (release, callback) => {
             return callback();
         }
     })
-    // Catch any error happening in the chain
+        // Catch any error happening in the chain
         .catch(err => callback(err));
 };
 
