@@ -20,8 +20,8 @@ describe('/GET database/search', () => {
             }
             let bestMatch = similarity.findBestMatch(s1, _.map(data.results, res => res.title)).bestMatch;
             should.exist(bestMatch);
-            bestMatch.rating.should.be.gt(0.7);
-            bestMatch.rating.should.be.lt(0.75);
+            bestMatch.rating.should.be.gt(0.6);
+            bestMatch.rating.should.be.lt(0.7);
             let res = _.find(data.results, res => res.title == bestMatch.target);
             res.title.should.be.equal('Andy Ash / Runaway - On The Prowl Presents: OTP Party Breaks # 3');
             done();
@@ -36,8 +36,8 @@ describe('/GET database/search', () => {
             }
             let bestMatch = similarity.findBestMatch(s2, _.map(data.results, res => res.title)).bestMatch;
             should.exist(bestMatch);
-            bestMatch.rating.should.be.gt(0.75);
-            bestMatch.rating.should.be.lt(0.8);
+            bestMatch.rating.should.be.gt(0.70);
+            bestMatch.rating.should.be.lt(0.75);
             let res = _.find(data.results, res => res.title == bestMatch.target);
             res.title.should.be.equal('Maxxi* & Zeus (11) - American Dreamer');
             done();
@@ -50,7 +50,7 @@ describe('/GET database/search', () => {
             if (err) {
                 return done(err);
             }
-            data.results.should.be.lengthOf(22);
+            data.results.should.be.lengthOf(26);
             done();
         });
     });

@@ -4,20 +4,20 @@ const winston = require('winston');
 const classes = require('../classes');
 const env = classes.Environment.fromDescription(process.env.NODE_ENV || 'development');
 
-const logger = new winston.Logger();
+const logger = winston.createLogger();
 
 if (env.is(classes.Environment.DEV)) {
-    logger.add(winston.transports.Console, {
+    logger.add(new (winston.transports.Console)({
         level: 'debug', timestamp: () => {
             return new Date().toISOString();
         }
-    });
+    }));
 } else if (env.is(classes.Environment.PROD)) {
-    logger.add(winston.transports.File, {
+    logger.add(new (winston.transports.File)({
         level: 'info',
         filename: 'chem-rich-books.log',
         json: false
-    });
+    }));
 }
 // Configure CLI on an instance of winston.Logger. Switching CLI on will make verbose logs disappearing... And I think
 // it is NOT supported everywhere yet.
