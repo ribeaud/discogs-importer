@@ -85,6 +85,12 @@ one or two paginated queries per purchase; live retrieval quality has not been m
 - `npm run test:integration`: legacy live Discogs tests; requires credentials and network. These
   tests retain historical search expectations and may fail as Discogs data changes.
 
+GitHub Actions runs `npm ci` (with dependency lifecycle scripts disabled), the offline tests,
+and the benchmark on Node.js 22 and 24 for pushes and pull requests targeting `master`.
+Offline test failures block the CI job. Benchmark results are informational: known matching
+gaps are reported, not treated as test failures. Live integration tests are excluded, so CI
+needs no Discogs credentials and cannot modify your collection. CI does not deploy or publish.
+
 The benchmark cases in `test/resources/matcher-cases.js` use **synthetic IDs and candidate sets**,
 including two retailer-title examples. They are not verified mappings of your purchases.
 The benchmark reports all incorrect decisions, including known limitations; it is a measurement
