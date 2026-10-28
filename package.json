@@ -4,7 +4,9 @@
   "description": "File importer to Discogs",
   "main": "app.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha"
+    "test": "mocha --ignore test/disconnect.js",
+    "test:integration": "mocha test/disconnect.js --timeout 15000",
+    "benchmark": "node bin/benchmark.js"
   },
   "repository": {
     "type": "git",
@@ -21,10 +23,11 @@
   "homepage": "https://github.com/ribeaud/discogs-importer#readme",
   "dependencies": {
     "commander": "5.0.0",
-    "config": "3.3.1",
+    "config": "3.3.12",
     "csv-parse": "4.8.9",
     "disconnect": "1.2.1",
     "enum": "3.0.3",
+    "he": "^1.2.0",
     "lodash": "4.17.15",
     "pkginfo": "0.4.1",
     "promise": "8.1.0",

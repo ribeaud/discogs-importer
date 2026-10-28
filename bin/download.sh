@@ -18,5 +18,6 @@ while [  $N -lt $END ]; do
     ((N=N+1))
 done
 
-# Merge all the files into 'all.csv'. Do NOT forget the remove the header for each file.
-awk 'FNR > 1' deejay*.csv > all.csv
+# Import each file separately: exports from different years have different headers.
+# Concatenating them can silently assign values to the wrong columns.
+echo "Downloads complete. Import each deejay.*.csv separately with node app.js <file>."

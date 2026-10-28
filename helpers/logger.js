@@ -21,7 +21,7 @@ if (env.is(classes.Environment.DEV)) {
         level: 'debug'
     }));
 } else if (env.is(classes.Environment.PROD)) {
-    logger.add(new (winston.transports.File)({
+    logger.add(new (transports.File)({
         format: combine(
             timestamp(),
             myFormat
