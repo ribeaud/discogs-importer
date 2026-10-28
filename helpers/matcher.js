@@ -1,6 +1,6 @@
 'use strict';
 
-const similarity = require('string-similarity');
+const similarity = require('./similarity');
 
 function normalizeCatalog(value = '') {
     const normalized = value.normalize('NFKC').toUpperCase().replace(/[^\p{L}\p{N}]/gu, '');

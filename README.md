@@ -5,7 +5,7 @@ The default is a **dry run**: it searches Discogs but does not add anything.
 
 ## Running
 
-Use a current Node.js LTS release and run `npm ci`.
+Use Node.js 22.12 or newer (a current LTS release) and run `npm ci`.
 Set `DISCOGS_USER_NAME` and `DISCOGS_USER_TOKEN` in your environment. Generate a personal
 token at https://www.discogs.com/settings/developers. Do not commit tokens.
 
@@ -54,7 +54,7 @@ Only set `dryRun` to `false` after reviewing the output and the matching limitat
    or `unknown` are treated as unavailable, not identifiers.
 3. Exclude non-release results, incompatible formats, Promo and White Label in every search path.
    For purchases with a catalog number, compare artist and title separately (case/whitespace
-   normalized), requiring each string-similarity score to exceed 0.7. A catalog alone is not proof.
+   normalized), requiring each similarity score (Dice coefficient over character bigrams, in `helpers/similarity.js`) to exceed 0.7. A catalog alone is not proof.
    Try each ` - ` separator boundary, so delimiters inside an artist or title do not force an
    incorrect split. Both fields must pass at the same boundary.
 4. Accept exactly one plausible candidate with the matching catalog. Multiple plausible pressings

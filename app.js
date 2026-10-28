@@ -90,9 +90,8 @@ async function importOrders(records, {database, collection, config, logger,
 }
 
 async function main() {
-    const program = require('commander');
+    const {program} = require('commander');
     program.version(require('./package.json').version).arguments('<csv-file>').parse(process.argv);
-    if (!program.args.length) { program.outputHelp(); return; }
     const config = require('config');
     if (!config.userName || !config.userToken) {
         throw new Error('Set DISCOGS_USER_NAME and DISCOGS_USER_TOKEN, or configure config/local.json.');

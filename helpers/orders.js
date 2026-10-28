@@ -1,6 +1,6 @@
 'use strict';
 
-const parse = require('csv-parse/lib/sync');
+const {parse} = require('csv-parse/sync');
 const {decode} = require('he');
 
 // Protect entity semicolons before CSV tokenization. Decode fields afterwards,
@@ -14,7 +14,7 @@ module.exports = function parseOrders(text, delimiter = ';') {
             return `\u0000${entities.length - 1}\u0000`;
         });
     const rows = parse(protectedText, {
-        delimiter, relax: true, relax_column_count: true, trim: true, skip_empty_lines: true
+        delimiter, relax_quotes: true, relax_column_count: true, trim: true, skip_empty_lines: true
     });
     const restore = value => decode(value.replace(/\u0000(\d+)\u0000/g, (_, i) => entities[i]));
     const headers = (rows.shift() || []).map(restore);

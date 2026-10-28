@@ -1,14 +1,16 @@
 'use strict';
 
-const chai = require('chai');
-const should = chai.should();
-const _ = require('lodash');
-const similarity = require('string-similarity');
+const assert = require('assert');
+const {compareTwoStrings} = require('../helpers/similarity');
 
 const config = require('config');
 const Discogs = require('disconnect').Client;
 const discogs = new Discogs({userToken: config.userToken});
 const database = discogs.database();
+
+const findBestMatch = (search, targets) => targets
+    .map(target => ({target, rating: compareTwoStrings(search, target)}))
+    .reduce((best, match) => match.rating > best.rating ? match : best, {rating: -1});
 
 describe('/GET database/search', () => {
     // Andy Ash / Runaway;Otp Party Breaks 3
@@ -18,12 +20,12 @@ describe('/GET database/search', () => {
             if (err) {
                 return done(err);
             }
-            let bestMatch = similarity.findBestMatch(s1, _.map(data.results, res => res.title)).bestMatch;
-            should.exist(bestMatch);
-            bestMatch.rating.should.be.gt(0.6);
-            bestMatch.rating.should.be.lt(0.7);
-            let res = _.find(data.results, res => res.title == bestMatch.target);
-            res.title.should.be.equal('Andy Ash / Runaway - On The Prowl Presents: OTP Party Breaks # 3');
+            let bestMatch = findBestMatch(s1, data.results.map(res => res.title));
+            assert.ok(bestMatch.target);
+            assert.ok(bestMatch.rating > 0.6);
+            assert.ok(bestMatch.rating < 0.7);
+            let res = data.results.find(res => res.title === bestMatch.target);
+            assert.strictEqual(res.title, 'Andy Ash / Runaway - On The Prowl Presents: OTP Party Breaks # 3');
             done();
         });
     });
@@ -34,12 +36,12 @@ describe('/GET database/search', () => {
             if (err) {
                 return done(err);
             }
-            let bestMatch = similarity.findBestMatch(s2, _.map(data.results, res => res.title)).bestMatch;
-            should.exist(bestMatch);
-            bestMatch.rating.should.be.gt(0.70);
-            bestMatch.rating.should.be.lt(0.75);
-            let res = _.find(data.results, res => res.title == bestMatch.target);
-            res.title.should.be.equal('Maxxi* & Zeus (11) - American Dreamer');
+            let bestMatch = findBestMatch(s2, data.results.map(res => res.title));
+            assert.ok(bestMatch.target);
+            assert.ok(bestMatch.rating > 0.70);
+            assert.ok(bestMatch.rating < 0.75);
+            let res = data.results.find(res => res.title === bestMatch.target);
+            assert.strictEqual(res.title, 'Maxxi* & Zeus (11) - American Dreamer');
             done();
         });
     });
@@ -50,7 +52,7 @@ describe('/GET database/search', () => {
             if (err) {
                 return done(err);
             }
-            data.results.should.be.lengthOf(26);
+            assert.strictEqual(data.results.length, 26);
             done();
         });
     });
