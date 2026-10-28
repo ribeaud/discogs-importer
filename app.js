@@ -31,9 +31,22 @@ async function importOrders(records, {database, collection, config, logger,
                 } while (++page <= pages);
                 return [...new Map(results.map(result => [result.id, result])).values()];
             };
-            let result = matchRelease(release, await search(null, {
-                artist: release.artist, title: release.title, format: release.format, type: 'release'
-            }));
+            let result = {status: 'unmatched'};
+            const catalog = matchRelease.normalizeCatalog(release.catno);
+            if (catalog) {
+                const candidates = [];
+                // Search both spellings before choosing: either can expose a
+                // competing pressing that the other query does not return.
+                for (const catno of new Set([release.catno.trim(), catalog])) {
+                    candidates.push(...await search(null, {catno, format: release.format, type: 'release'}));
+                }
+                result = matchRelease(release, candidates);
+            }
+            if (result.status === 'unmatched') {
+                result = matchRelease(release, await search(null, {
+                    artist: release.artist, title: release.title, format: release.format, type: 'release'
+                }));
+            }
             if (result.status === 'unmatched') {
                 result = matchRelease(release, await search(`${release.artist} - ${release.title}`, {
                     format: release.format, type: 'release'

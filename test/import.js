@@ -40,11 +40,15 @@ describe('Import workflow', () => {
         assert.deepStrictEqual(env.stored, [{user: 'test', folder: 2, id: 7}]);
     });
     it('does not mistake a single first-page result for an unambiguous match', async () => {
-        const env = environment(false);
-        env.database.search = async (query, params) => ({results: [candidate(params.page)], pagination: {pages: 2}});
-        const result = await importOrders([item('A')], env);
-        assert.strictEqual(result.review, 1);
-        assert.deepStrictEqual(env.stored, []);
+        for (const catno of [undefined, 'EX001']) {
+            const env = environment(false);
+            env.database.search = async (query, params) => ({
+                results: [{...candidate(params.page), title: 'Artist - A', catno}], pagination: {pages: 2}
+            });
+            const result = await importOrders([{...item('A'), 'Label No': catno}], env);
+            assert.strictEqual(result.review, 1);
+            assert.deepStrictEqual(env.stored, []);
+        }
     });
     it('rejects a missing destination instead of writing to another folder', async () => {
         const env = environment(false);
@@ -82,5 +86,68 @@ describe('Import workflow', () => {
         const result = await importOrders([], {config: {}});
         assert.strictEqual(result.failed, 0);
         assert.strictEqual(result.added, 0);
+    });
+
+    for (const field of ['Label No', 'Catno']) {
+        it(`finds a catalog-only candidate using normalized ${field}`, async () => {
+            const env = environment(false);
+            env.database.search = async (query, params) => ({results: params.catno === 'EX001A' ?
+                [{...candidate(7), title: 'Artist - A', catno: 'EX-001 A'}] : []});
+            const result = await importOrders([{...item('A'), [field]: ' ex-001 a '}], env);
+            assert.strictEqual(result.added, 1);
+            assert.deepStrictEqual(env.stored, [{user: 'test', folder: 2, id: 7}]);
+        });
+    }
+    it('combines raw and normalized catalog results before deciding on a pressing', async () => {
+        const env = environment(false);
+        env.database.search = async (query, params) => ({results: [
+            {...candidate(params.catno === 'EX-001' ? 7 : 8), title: 'Artist - A', catno: 'EX001'}
+        ]});
+        const result = await importOrders([{...item('A'), 'Label No': 'EX-001'}], env);
+        assert.strictEqual(result.review, 1);
+        assert.deepStrictEqual(env.stored, []);
+    });
+    it('deduplicates one release found by both catalog queries', async () => {
+        const env = environment(false);
+        env.database.search = async () => ({results: [{...candidate(7), title: 'Artist - A', catno: 'EX001'}]});
+        const result = await importOrders([{...item('A'), 'Label No': 'EX-001'}], env);
+        assert.strictEqual(result.added, 1);
+        assert.strictEqual(env.stored.length, 1);
+    });
+    it('never writes either pressing when the other has an edition annotation', async () => {
+        const pressings = [
+            {...candidate(7), title: 'Artist - Night', catno: 'EX001'},
+            {...candidate(8), title: 'Artist - Night (Remastered)', catno: 'EX001'}
+        ];
+        for (const results of [pressings, [...pressings].reverse()]) {
+            const env = environment(false);
+            env.database.search = async () => ({results});
+            const result = await importOrders([{...item('Night'), 'Label No': 'EX001'}], env);
+            assert.strictEqual(result.review, 1);
+            assert.strictEqual(result.failed, 0);
+            assert.deepStrictEqual(env.stored, []);
+        }
+    });
+    it('imports an exact catalog match with delimiters in artist and title', async () => {
+        const env = environment(false);
+        env.database.search = async () => ({results: [{...candidate(7),
+            title: 'Artist A - Artist B - Night - Day', catno: 'EX001'}]});
+        const result = await importOrders([{...item('Night - Day'), Artist: 'Artist A - Artist B',
+            'Label No': 'EX001'}], env);
+        assert.strictEqual(result.added, 1);
+        assert.deepStrictEqual(env.stored, [{user: 'test', folder: 2, id: 7}]);
+    });
+    it('uses text fallback without relaxing catalog validation', async () => {
+        for (const fuzzy of [false, true]) {
+            for (const catno of ['EX001', 'OTHER02', undefined]) {
+                const env = environment(false);
+                env.database.search = async (query, params) => ({results: params.catno || (fuzzy && !query) ? [] :
+                    [{...candidate(7), title: 'Artist - A', catno}]});
+                const result = await importOrders([{...item('A'), 'Label No': 'EX001'}], env);
+                assert.strictEqual(result.added, catno === 'EX001' ? 1 : 0);
+                assert.strictEqual(result.review, catno === 'EX001' ? 0 : 1);
+                assert.strictEqual(env.stored.length, catno === 'EX001' ? 1 : 0);
+            }
+        }
     });
 });
