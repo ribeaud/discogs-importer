@@ -31,7 +31,7 @@ describe('Order CSV import', () => {
         assert.strictEqual(item.Artist, 'Maxxi & Zeus');
         assert.strictEqual(item['Label No'], 'IFEEL010');
         const consolidated = read('all.csv');
-        assert.strictEqual(consolidated.records.length, 182);
+        assert.strictEqual(consolidated.records.length, 387);
         assert.strictEqual(consolidated.records.find(row => row.ID === '304546')['Label No'], 'F&R004');
     });
 });

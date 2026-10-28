@@ -18,9 +18,22 @@ Override settings in the gitignored `config/local.json`, for example:
 }
 ```
 
-Run `node app.js <csv-file>`. Relative paths resolve from your current directory.
+Run `node app.js <csv-file>`, usually `node app.js test/resources/all.csv`.
+Relative paths resolve from your current directory.
 The folder must already exist; the importer will not silently choose a different one.
 Only set `dryRun` to `false` after reviewing the output and the matching limitations below.
+
+## Downloading new orders
+
+`test/resources/all.csv` holds the vinyl rows of orders 0105 onwards, currently up to 0202.
+deejay.de is behind a Cloudflare browser check, so the exports cannot be downloaded with `curl`.
+Use [`bin/download.js`](bin/download.js) in your browser instead:
+
+1. Log in at deejay.de and open [shipped Orders](https://www.deejay.de/m_myDeejay/sm_myInvoices).
+2. In `bin/download.js`, set `FROM` to the first order number missing from `all.csv`.
+3. Open the developer console (F12), paste the file and press Enter. The browser saves
+   `deejay.<FROM>-<latest>.csv` with the vinyl rows of those orders and no payment rows.
+4. Append it without its header: `tail -n +2 ~/Downloads/deejay.0203-0210.csv >> test/resources/all.csv`.
 
 ## Input and safety
 
@@ -30,7 +43,7 @@ Only set `dryRun` to `false` after reviewing the output and the matching limitat
 - Missing artist/title and incorrect column counts are reported with CSV record numbers and skipped.
   Invalid CSV syntax or missing required headers aborts the file. Record numbers may differ from
   physical line numbers when quoted fields span lines.
-- Import individual downloads separately. Do not concatenate exports with different column layouts.
+- Do not concatenate exports with different column layouts; `bin/download.js` refuses to.
 - `Label No` (or `Catno`) is used for catalog-first search and candidate validation.
 - Releases already anywhere in your collection, or already planned/added in this run, are skipped.
   Intentional multiple copies are not supported.
