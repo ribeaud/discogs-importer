@@ -64,14 +64,26 @@ Use [`bin/download.js`](bin/download.js) in your browser instead:
 2. Normalize catalog numbers with Unicode normalization, uppercase, and removal of punctuation
    and whitespace. Preserve all letters and digits, including suffixes and leading zeros:
    `EX-001 A` equals `ex001a`, but not `EX001B` or `EX1A`. Empty values and `none`, `N/A`,
-   or `unknown` are treated as unavailable, not identifiers.
-3. Exclude non-release results, incompatible formats, Promo and White Label in every search path.
-   For purchases with a catalog number, compare artist and title separately (case/whitespace
-   normalized), requiring each similarity score (Dice coefficient over character bigrams, in `helpers/similarity.js`) to exceed 0.7. A catalog alone is not proof.
+   or `unknown` are treated as unavailable, not identifiers. A trailing format word on either
+   side is ignored when comparing: Discogs' `SM-004 EP` equals `SM004`.
+3. Exclude non-release results, incompatible formats and Test Pressings in every search path.
+   Promos and White Labels are only considered for purchases with a catalog number.
+   For those, compare artist and title separately, requiring each similarity score (Dice
+   coefficient over character bigrams, in `helpers/similarity.js`) to exceed 0.7. A catalog
+   alone is not proof. Comparisons ignore case, accents and ligatures (`Œil` equals `Oeil`).
    Try each ` - ` separator boundary, so delimiters inside an artist or title do not force an
-   incorrect split. Both fields must pass at the same boundary.
-4. Accept exactly one plausible candidate with the matching catalog. Multiple plausible pressings
-   sharing that catalog go to `REVIEW`, even if one has a better title score. Plausible candidates
+   incorrect split. Both fields must pass at the same boundary. To absorb retailer spellings:
+   - Artists also match without Discogs' `(3)` numbering and `*` variation marks.
+     `Various`, `Various Artists`, `VA` and `Anonymous` match any artist.
+   - Titles also match after dropping annotations other than editions, such as `(inc. X Remix)`,
+     `w/ X Remix` and trailing format words (`EP`, `2LP`, `2x12"`), and when one title is a
+     whole part of the other (`Testify` in `Testify / Can't U`) or the Discogs title repeats
+     the artist (`Bananarama Remixed: Vol 1`).
+4. Among candidates with the matching catalog, prefer retail pressings, then White Labels, then
+   Promos. Accept exactly one plausible candidate. Multiple plausible pressings
+   sharing that catalog go to `REVIEW`, even if one has a better title score. So do other
+   pressings with the same catalog and artist whose title is spelled differently, such as a
+   repress listed as `TTJ1305` beside the original `TTJ Edits #1305`. Plausible candidates
    with missing catalog data also force review because they cannot be ruled out. If all plausible
    candidates have conflicting catalogs, review rather than choosing one.
    Parenthesized or bracketed remaster, reissue and repress annotations (optionally with a year
@@ -86,8 +98,9 @@ strict-search result; otherwise review multiple results, or try fuzzy search whe
 The fuzzy path accepts a unique best combined artist/title score above 0.7 and reviews ties.
 
 `REVIEW` currently means log and skip, not an interactive review queue. Scores are heuristics,
-not calibrated probabilities. Missing metadata, unrecognized edition annotations, complex artist credits, abbreviated titles and
-indistinguishable pressings can still require manual verification. No-catalog single-result
+not calibrated probabilities. Missing metadata, unrecognized edition annotations, complex artist credits,
+titles the retailer and Discogs spell differently, and represses that cannot be told apart from the
+original still require manual verification. No-catalog single-result
 acceptance and fuzzy near-ties retain the limitations of the baseline. Catalog search can add
 one or two paginated queries per purchase; live retrieval quality has not been measured.
 
@@ -122,6 +135,27 @@ Automatic coverage is unchanged: catalog disambiguation adds one correct automat
 while a formerly incorrect match with a conflicting catalog now goes to review. No previously
 correct benchmark decisions regressed. Additional contract tests (outside these 13 cases) cover
 normalization, metadata conflicts, missing catalogs, shared catalogs, pagination, and fallback safety.
+When Promos and White Labels became candidates for catalog matches, the case that assumed they
+are always excluded was split by catalog availability: the benchmark now has 14 cases, with 13
+correct decisions and 5 / 5 correct automatic matches.
+
+### Real purchases
+
+The retailer-spelling rules were derived from a dry run of all 387 purchases in `all.csv`, with
+every Discogs search the importer can issue recorded once and replayed offline against both
+matchers. Your Discogs collection served as ground truth: a match is confirmed when it is the
+release you own, and wrong when you own a different release with the same catalog.
+
+| Result on 387 purchases | Before | After |
+| --- | --- | --- |
+| Matched the release you own | 177 | 250 |
+| Matched a release not in your collection | 32 | 53 |
+| Matched, but you own a different pressing | 0 | 0 |
+| Owned, but sent to review or unmatched | 105 | 33 |
+| Review or unmatched, not owned | 73 | 51 |
+
+The matches outside your collection are mostly recent orders and were checked by eye, not
+verified. The recorded searches are not committed: they hold about 1,200 Discogs responses.
 
 The same command checks all 141 individual archived order exports: 670 vinyl rows,
 224 non-vinyl rows skipped, and no malformed rows. This is parsing coverage, not matching
